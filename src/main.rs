@@ -1,4 +1,4 @@
-use chrono::{DateTime, Utc};
+use std::time::SystemTime;
 use serde::{Serialize, Deserialize};
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -6,14 +6,16 @@ pub struct StructWithCustomDate {
     // DateTime supports Serde out of the box, but uses RFC3339 format. Provide
     // some custom logic to make it use our desired format.
     #[serde(with = "my_date_format")]
-    pub timestamp: DateTime<Utc>,
+    //pub timestamp: DateTime<Utc>,
+    pub timestamp: SystemTime,
 
     // Any other fields in the struct.
     pub bidder: String,
 }
 
 mod my_date_format {
-    use chrono::{DateTime, Utc, TimeZone};
+    use std::time::SystemTime;
+    use chrono::{Utc, TimeZone};
     use serde::{self, Deserialize, Serializer, Deserializer};
 
     //const FORMAT: &'static str = "%Y-%m-%d %H:%M:%S";
@@ -27,13 +29,13 @@ mod my_date_format {
     //
     // although it may also be generic over the input types T.
     pub fn serialize<S>(
-        date: &DateTime<Utc>,
+        date: &SystemTime,
         serializer: S,
     ) -> Result<S::Ok, S::Error>
     where
         S: Serializer,
     {
-        let s = format!("{}", date.format(FORMAT));
+        let s = format!("{:?}", date);
         serializer.serialize_str(&s)
     }
 
@@ -46,12 +48,20 @@ mod my_date_format {
     // although it may also be generic over the output types T.
     pub fn deserialize<'de, D>(
         deserializer: D,
-    ) -> Result<DateTime<Utc>, D::Error>
+    ) -> Result<SystemTime, D::Error>
     where
         D: Deserializer<'de>,
     {
         let s = String::deserialize(deserializer)?;
-        Utc.datetime_from_str(&s, FORMAT).map_err(serde::de::Error::custom)
+
+        match Utc.datetime_from_str(&s, FORMAT).map_err(serde::de::Error::custom) {
+            Ok(dt) => {
+               // let dt: DateTime<Utc> = 
+                let systime: SystemTime = dt.into();
+                Ok(systime)
+            },
+            Err(e) => Err(e)
+        }
     }
 }
 
@@ -65,7 +75,7 @@ fn main() -> Result<(), csv::Error> {
     for record in reader.deserialize() {
         let record: StructWithCustomDate = record?;
         println!(
-            "timestamp={}, bidder={}",
+            "timestamp={:?}, bidder={}",
             record.timestamp,
             record.bidder,
         );
