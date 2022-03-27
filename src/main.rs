@@ -16,7 +16,8 @@ mod my_date_format {
     use chrono::{DateTime, Utc, TimeZone};
     use serde::{self, Deserialize, Serializer, Deserializer};
 
-    const FORMAT: &'static str = "%Y-%m-%d %H:%M:%S";
+    //const FORMAT: &'static str = "%Y-%m-%d %H:%M:%S";
+    const FORMAT: &'static str = "%m/%d/%Y %r";
 
     // The signature of a serialize_with function must follow the pattern:
     //
@@ -56,7 +57,7 @@ mod my_date_format {
 
 fn main() -> Result<(), csv::Error> {
     let csv = r#""timestamp","bidder"
-"2017-02-16 21:54:30","Skrillex"
+"2/15/2022 10:01:27 PM","Skrillex"
 "#;
 
     let mut reader = csv::Reader::from_reader(csv.as_bytes());
